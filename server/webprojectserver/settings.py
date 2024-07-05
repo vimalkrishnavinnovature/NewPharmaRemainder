@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'auth_app',
     'healthcare_app',
+    'file_handler',
 ]
 
 # Add custom authentication backends here

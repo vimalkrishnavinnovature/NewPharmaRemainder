@@ -1,8 +1,5 @@
 import json
-import xlsxwriter 
-import pandas as pd
-from io import BytesIO
-from django.http import JsonResponse,HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render
 from healthcare_app.models import Guardian,Patient,Prescription,Medication
 from django.contrib.auth.decorators import login_required
@@ -78,68 +75,6 @@ def view_guardian(request):
     except Guardian.DoesNotExist:
         error_message = 'Guardian not found'
         return JsonResponse({'profileEmpty': True, 'message': error_message}, status=460)
-
-#Export the currently logged in guardian details to an excel file along with the patients linked to the guardian and the medications prescribed to the patients
-@csrf_exempt
-@login_required
-def export_guardian(request):
-    try:
-        guardian = Guardian.objects.get(UserID=request.user)
-        patients = Patient.objects.filter(GuardianID=guardian)
-
-        data = []
-        for patient in patients:
-            patient_data = {
-                'PatientID': patient.PatientID,
-                'Name': patient.Name,
-                'DateOfBirth': patient.DateOfBirth,
-                'Gender': patient.Gender,
-                'PhoneNumber': patient.PhoneNumber,
-                'BloodType': patient.BloodType,
-            }
-            prescriptions = Prescription.objects.filter(PatientID=patient)
-            prescriptions_data = []
-            for prescription in prescriptions:
-                prescription_data = {
-                    'PrescriptionID': prescription.PrescriptionID,
-                    'Condition': prescription.Condition,
-                    'DoctorName': prescription.DoctorName,
-                }
-                medications = Medication.objects.filter(PrescriptionID=prescription)
-                medications_data = []
-                for medication in medications:
-                    medication_data = {
-                        'MedicationName': medication.MedicationName,
-                        'Label': medication.Label,
-                        'Dosage': medication.Dosage,
-                        'NotificationTime': medication.NotificationTime,
-                        'Frequency': medication.Frequency,
-                        'StartDate': medication.StartDate,
-                        'EndDate': medication.EndDate,
-                    }
-                    medications_data.append(medication_data)
-                prescription_data['Medications'] = medications_data
-                prescriptions_data.append(prescription_data)
-            patient_data['Prescriptions'] = prescriptions_data
-            data.append(patient_data)
-
-        # Convert the data to a pandas DataFrame
-        df = pd.DataFrame(data)
-
-        # Save the DataFrame to an Excel file
-        excel_file = BytesIO()
-        with pd.ExcelWriter(excel_file, engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name='Patients')
-        excel_file.seek(0)
-
-        # Serve the Excel file as an HTTP response
-        response = HttpResponse(excel_file.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="patients_details.xlsx"'
-        return response
-    except Guardian.DoesNotExist:
-        return JsonResponse({'message': 'Guardian not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'message': f'An error occurred: {str(e)}'}, status=500)
 
 
 
