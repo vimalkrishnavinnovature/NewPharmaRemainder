@@ -1,0 +1,23 @@
+.custom-container {
+  height: auto;
+  margin-top: 30px;
+  margin-bottom:30px;
+  border: 2px solid #1b3153; /* A brighter shade of blue */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 6px 20px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+  border-radius: 10px; /* Rounded corners for a modern look */
+  overflow: hidden; /* Ensures no child content can bleed outside the border-radius */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover effects */
+}
+
+.custom-container:hover {
+  transform: translateY(-1px); /* Slight lift effect on hover */
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover for a "lifting" effect */
+}
+
+.custom-parent{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+

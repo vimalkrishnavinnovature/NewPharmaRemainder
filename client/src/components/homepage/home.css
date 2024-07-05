@@ -1,0 +1,44 @@
+
+
+  @keyframes rotateImage {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(180deg);
+    }
+  }
+  .profile-icon {
+    width: 36px; /* Adjust the width as needed */
+    height: auto; /* Maintain aspect ratio */
+    margin:8px
+  }
+  
+
+  .dropdown-img {
+    width: 30px; /* Adjust the width as needed */
+    height: 30px; /* Adjust the height as needed */
+    animation: rotateImage 0.5s forwards;
+  }
+  .custom-button
+  {
+    font-family: 'Arial', sans-serif;
+    margin: 8px;
+    font-weight: bold;
+  }
+  .blur {
+    filter: blur(4px);
+  }
+  .username {
+    font-size: 1.5rem; 
+    text-transform: capitalize;
+  }
+  
+  /* Smaller size for devices smaller than md */
+  @media (max-width: 767.98px) { 
+    .username {
+      font-size: 1rem; 
+    }
+  }
+ 
+  

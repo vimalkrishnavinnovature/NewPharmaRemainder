@@ -1,0 +1,43 @@
+.medication-container {
+    background: #ffffff; /* Set background to white */
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 20px;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #a3a3a3; /* Add a light grey border */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+}
+
+.prescription-container
+{
+    background: #ffffff; /* Set background to white */
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 20px;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #535353; /* Add a light grey border */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+}
+
+.main-container
+{
+    background: #ffffff; /* Set background to white */
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 20px;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #111111; /* Add a light grey border */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+}
+.custom-close-icon {
+    width: 36px; /* Adjust the width as needed */
+    height: auto; /* Maintain aspect ratio */
+
+  }
+  

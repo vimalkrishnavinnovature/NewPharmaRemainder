@@ -1,0 +1,52 @@
+.custom-parent {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 600px;
+}
+
+.profile-container {
+    background-color: white;
+    border: 1px solid #ccc;
+}
+
+/* Media query for screens smaller than md breakpoint */
+@media (max-width: 767px) {
+    .profile-container {
+        width: 60%; /* Adjust the width to fit smaller screens */
+        padding: 20px; /* Optional: Adjust padding for smaller screens */
+    }
+}
+
+.profile-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10; /* Ensure it's above other content */
+}
+.icons-wrapper {
+    display: flex;
+    justify-content: space-between; /* This will push the first child to the start and the last child to the end */
+    align-items: center; /* Ensure icons are vertically centered */
+    width: 100%;
+}
+
+.profile-icon-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center; /* Keep the profile icon centered */
+    margin-left: 30px; /* Adjust this value as needed to move the icon to the right */
+}
+
+.icons {
+    width: 80px; /* Existing style for icon size */
+    height: auto; /* Maintain aspect ratio */
+    padding: 12px;
+}
+
+.close-icon {
+    width: 32px; /* Reduced size for the close icon */
+    height: auto; /* Maintain aspect ratio */
+}
