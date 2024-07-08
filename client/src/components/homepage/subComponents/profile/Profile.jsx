@@ -15,7 +15,6 @@ import './profile.css';
 const Profile = ({ setShowProfile, guardianData = null }) => {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
-    const [email, setEmail] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
     const [relationshipToPatient, setRelationshipToPatient] = useState('');
@@ -25,7 +24,6 @@ const Profile = ({ setShowProfile, guardianData = null }) => {
         if (guardianData) {
             setFirstName(guardianData.FirstName);
             setLastName(guardianData.LastName);
-            setEmail(guardianData.Email);
             setPhoneNumber(guardianData.PhoneNumber);
             setAddress(guardianData.Address);
             setRelationshipToPatient(guardianData.RelationshipToPatient);
@@ -46,15 +44,6 @@ const Profile = ({ setShowProfile, guardianData = null }) => {
         // Validate Last Name
         if (!lastName.trim()) {
             errors.lastName = "Last Name is required";
-            formIsValid = false;
-        }
-    
-        // Validate Email
-        if (!email) {
-            errors.email = "Email is required";
-            formIsValid = false;
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            errors.email = "Email is invalid";
             formIsValid = false;
         }
     
@@ -87,10 +76,9 @@ const Profile = ({ setShowProfile, guardianData = null }) => {
         e.preventDefault();
         setError({}); // Reset error messages before attempting to submit
         if (validateForm()) {
-            const guardianData = {
+            const currentGuardianData = {
                 FirstName: firstName,
                 LastName: lastName,
-                Email: email,
                 PhoneNumber: phoneNumber,
                 Address: address,
                 RelationshipToPatient: relationshipToPatient,
@@ -98,12 +86,11 @@ const Profile = ({ setShowProfile, guardianData = null }) => {
 
             try {
                 const url = guardianData ? `/guardian/update/` : '/guardian/add/';
-                const response = await axios.post(url, guardianData);
+                const response = await axios.post(url, currentGuardianData);
                 console.log(response.data.message);
                 // Reset form fields after successful submission
                 setFirstName('');
                 setLastName('');
-                setEmail('');
                 setPhoneNumber('');
                 setAddress('');
                 setRelationshipToPatient('');

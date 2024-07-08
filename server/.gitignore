@@ -41,3 +41,7 @@ htmlcov/
 .coverage
 .coverage.*
 .pytest_cache/
+
+#Temp Files
+/tempFiles
+finalFiles

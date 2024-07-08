@@ -1,16 +1,26 @@
+
+# Create your views here.
+# #Export the currently logged in guardian details to an excel file along with the patients linked to the guardian and the medications prescribed to the patients
+import csv
+import os
+from django.db import transaction
+from django.core.cache import cache
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
-from io import BytesIO
+from io import BytesIO, StringIO
 import pandas as pd
 from healthcare_app.models import Guardian, Patient, Prescription, Medication
+import uuid
+
+
 
 # Create your views here.
 #Export the currently logged in guardian details to an excel file along with the patients linked to the guardian and the medications prescribed to the patients
 @csrf_exempt
 @login_required
-def export_guardian(request):
+def download_patient(request):
     try:
         guardian = Guardian.objects.get(UserID=request.user)
         patients = Patient.objects.filter(GuardianID=guardian)
@@ -25,7 +35,7 @@ def export_guardian(request):
                 'PhoneNumber': patient.PhoneNumber,
                 'BloodType': patient.BloodType,
             }
-            #comment it out to get the whole prescription details and medical details also
+            # Comment it out to get the whole prescription details and medical details also
             '''
             prescriptions = Prescription.objects.filter(PatientID=patient)
             prescriptions_data = []
@@ -71,97 +81,162 @@ def export_guardian(request):
         return JsonResponse({'message': 'Guardian not found'}, status=404)
     except Exception as e:
         return JsonResponse({'message': f'An error occurred: {str(e)}'}, status=500)
-'''
-def import_guardian(request):
-    if request.method=='POST':
-        try:
-            csv_file=request.FILES.get('file')
-            if not csv_file:
-                return JsonResponse({'message': 'Please upload a file'}, status=400)
-            if not csv_file.name.endswith('.csv'):
-                return JsonResponse({'message': 'Please upload a CSV file'}, status=400)
-            #consider the file is uploaded as chunks
-            df = pd.read_csv(csv_file)
-'''
 
 
-
-
-
-
-
-'''
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
-import csv
-from io import StringIO
-from .models import Guardian, Patient
-from django.contrib.auth.models import User
-import os
 
 @csrf_exempt
 @login_required
-def import_patients(request):
+def initiate_patient_upload(request):
     if request.method == 'POST':
         try:
-            chunk_number = int(request.POST.get('chunkNumber'))
-            total_chunks = int(request.POST.get('totalChunks'))
-            csv_file = request.FILES.get('file')
-            if not csv_file:
-                return JsonResponse({'message': 'No file provided'}, status=400)
+            fileName=request.POST.get('fileName')
+            fileSize=request.POST.get('fileSize')
+            totalChunks=request.POST.get('totalChunks')
+
+            # Generate a unique upload ID
+            uploadID = str(uuid.uuid4())
+            cacheKey= f'upload_{request.user.id}_{uploadID}'
+            cache.set(cacheKey, {
+                'fileName': fileName,
+                'fileSize': fileSize,
+                'totalChunks': totalChunks,
+                'ChunksReceived':[],
+            }, timeout=3600)    # Set a timeout of 1 hour for the cache entry
             
-            # Define a temporary storage path for chunks
-            temp_storage_path = 'temp_chunks'
-            if not os.path.exists(temp_storage_path):
-                os.makedirs(temp_storage_path)
-            
-            # Save the chunk with a name that includes the chunk number for ordering
-            chunk_filename = os.path.join(temp_storage_path, f'chunk_{chunk_number}.csv')
-            with open(chunk_filename, 'wb+') as chunk_file:
-                for chunk in csv_file.chunks():
-                    chunk_file.write(chunk)
-            
-            # Check if all chunks have been received
-            if len(os.listdir(temp_storage_path)) == total_chunks:
-                # Combine chunks in the correct order
-                combined_csv_string = ''
-                for i in range(total_chunks):
-                    chunk_path = os.path.join(temp_storage_path, f'chunk_{i}.csv')
-                    with open(chunk_path, 'r') as chunk_file:
-                        combined_csv_string += chunk_file.read()
-                
-                # Process the combined CSV
-                csv_reader = csv.reader(StringIO(combined_csv_string))
-                next(csv_reader)  # Skip header row
-                guardian = Guardian.objects.get(UserID=request.user)
-                for row in csv_reader:
-                    name, date_of_birth, gender, phone_number, blood_type = row
-                    Patient.objects.create(
-                        GuardianID=guardian,
-                        Name=name,
-                        DateOfBirth=date_of_birth,
-                        Gender=gender,
-                        PhoneNumber=phone_number,
-                        BloodType=blood_type,
-                    )
-                
-                # Clean up the temporary storage
-                for filename in os.listdir(temp_storage_path):
-                    os.remove(os.path.join(temp_storage_path, filename))
-                os.rmdir(temp_storage_path)
-                
-                return JsonResponse({'message': 'Patients imported successfully'}, status=200)
-            else:
-                return JsonResponse({'message': 'Chunk received'}, status=202)
-        
-        except Guardian.DoesNotExist:
-            return JsonResponse({'message': 'Guardian not found'}, status=404)
+            return JsonResponse({'uploadID': uploadID}, status=200)
         except Exception as e:
+            return JsonResponse({'message': f'An error occurred: {str(e)}'}, status=500)
+    else:
+        return JsonResponse({'message': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+@login_required
+def upload_patient_chunk(request):
+    if request.method == 'POST':
+        try:
+            uploadID = request.POST.get('uploadID')
+            chunkNumber = request.POST.get('chunkNumber')
+            fileChunk = request.FILES['file']
+
+            cache_key = f'upload_{request.user.id}_{uploadID}'
+            uploadSessionData = cache.get(cache_key)
+            if not uploadSessionData:
+                return JsonResponse({'message': 'Invalid upload session'}, status=400)
+            
+            # Convert the list of ChunksReceived back to a set to ensure uniqueness
+            chunksReceived = set(uploadSessionData.get('ChunksReceived', []))
+            chunksReceived.add(chunkNumber)
+            
+            # Update the cache with the new set of ChunksReceived, converting the set back to a list
+            uploadSessionData['ChunksReceived'] = list(chunksReceived)
+            cache.set(cache_key, uploadSessionData, timeout=3600)
+            
+            tempStoragePath = f'tempFiles/{request.user.id}_{uploadID}'
+            # Create the temporary storage directory if it doesn't exist and create separate files for each chunk as they may not arrive sequentially
+            if not os.path.exists(tempStoragePath):
+                os.makedirs(tempStoragePath)
+            chunkFilePath = os.path.join(tempStoragePath, f'chunk_{chunkNumber}.part')
+            with open(chunkFilePath, 'wb+') as chunkFile:
+                chunkFile.write(fileChunk.read())
+            return JsonResponse({'message': 'Chunk received'}, status=200)
+        except Exception as e:
+            return JsonResponse({'message': f'An error occurred: {str(e)}'}, status=500)
+    else:
+        return JsonResponse({'message': 'Invalid request method'}, status=405)          
+
+
+
+@csrf_exempt
+@login_required
+def complete_patient_upload(request):
+    if request.method == 'POST':
+        try:
+            upload_id = request.POST.get('uploadID')
+            cache_key = f'upload_{request.user.id}_{upload_id}'
+            upload_session_data = cache.get(cache_key)
+            
+            if not upload_session_data:
+                print("Invalid upload session")
+                return JsonResponse({'message': 'Invalid upload session'}, status=400)
+            totalchunks = int(upload_session_data['totalChunks'])
+            #check if all chunks have been received
+            if (len(upload_session_data['ChunksReceived']) != totalchunks):
+                return JsonResponse({'message': 'Incomplete file upload data'}, status=400)
+            
+            tempStoragePath = f'tempFiles/{request.user.id}_{upload_id}'
+            finalFilePath = f'finalFiles/{request.user.id}_{upload_id}.csv'  # Assuming CSV file format
+            #create finalFilePath if it does not exist
+            if not os.path.exists('finalFiles'):
+                os.makedirs('finalFiles')
+            
+            #combine all the chunks into a single file    
+            with open(finalFilePath, 'wb+') as finalFile:
+                for chunkNumber in range(totalchunks):
+                    chunkFilePath = os.path.join(tempStoragePath, f'chunk_{chunkNumber}.part')
+                    with open(chunkFilePath, 'rb') as chunkFile:
+                        finalFile.write(chunkFile.read())
+                    os.remove(chunkFilePath)
+            os.rmdir(tempStoragePath)
+            print("File uploaded successfully now processing the file")
+            # Process the combined file
+            df = pd.read_csv(finalFilePath)
+            print("Loaded df")
+            # Rename DataFrame columns to match the Patient model fields
+            df.rename(columns={
+                'Name': 'Name',
+                'Date of Birth': 'DateOfBirth',
+                'Gender': 'Gender',
+                'Phone Number': 'PhoneNumber',
+                'Blood Type': 'BloodType'
+            }, inplace=True)
+            print("finished rename")
+            
+            guardian = Guardian.objects.get(UserID=request.user)
+            batchSize =50000
+            for start in range(0, len(df), batchSize):
+                end=start+batchSize
+                patients_list =[
+                    Patient(
+                    GuardianID=guardian,
+                    Name=row['Name'],
+                    DateOfBirth=row['DateOfBirth'],
+                    Gender=row['Gender'],
+                    PhoneNumber=row['PhoneNumber'],
+                    BloodType=row['BloodType']
+                    )
+                    for index, row in df[start:end].iterrows()
+                ]
+                with transaction.atomic():
+                    Patient.objects.bulk_create(patients_list, batch_size=1000)
+                print(f"Inserted {end} records")
+                
+            # Clean up the final file and delete the cache key
+            os.remove(finalFilePath)
+            cache.delete(cache_key)
+            return JsonResponse({'message': 'File uploaded successfully'}, status=200)
+        except Exception as e:
+            print(e)
             return JsonResponse({'message': f'An error occurred: {str(e)}'}, status=500)
     else:
         return JsonResponse({'message': 'Invalid request method'}, status=405)
 
 
 
-'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

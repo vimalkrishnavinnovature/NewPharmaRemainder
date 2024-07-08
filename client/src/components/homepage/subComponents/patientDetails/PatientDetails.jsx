@@ -3,6 +3,7 @@ import PatientForm from './subComponents/patientForm';
 import axios from 'axios';
 import PrescriptionForm from './subComponents/prescriptionForm/PrescriptionsForm';
 import './patientDetails.css';
+import { handleFileExport,handleFileImport } from './fileHandlerUtility';
 import deleteIcon from '../../../../resources/patientDetails/deleteIcon.png';
 import viewIcon from '../../../../resources/patientDetails/viewIcon.png';
 import editIcon from '../../../../resources/patientDetails/editIcon.png';
@@ -24,7 +25,6 @@ const PatientDetails = () => {
   const [importButtonClicked, setImportButtonClicked] = useState(false);
   const [patients, setPatients] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const chunkSize = 1024 * 1024 * 2; // 2MB
 
 
   useEffect(() => {
@@ -54,59 +54,23 @@ const PatientDetails = () => {
 
   const handleExport = async () => {
     try {
-      alert("Exporting to an excel file");
-      const response = await axios.get('/guardian/export/', {
-        responseType: 'blob', // Important: This tells axios to expect a binary response instead of JSON
-      });
-
-      // Create a URL for the blob
-      const fileURL = window.URL.createObjectURL(new Blob([response.data]));
-      // Create a temporary anchor element and trigger the download
-      const fileLink = document.createElement('a');
-      fileLink.href = fileURL;
-      fileLink.setAttribute('download', 'patients_details.xlsx'); // Set the file name for the download
-      document.body.appendChild(fileLink);
-
-      fileLink.click(); // Trigger the download
-
-      // Clean up by removing the temporary link
-      fileLink.remove();
+      await handleFileExport();
     } catch (err) {
       console.error(err);
+      alert("Error exporting data");
     }
-  }
+  };
 
-  const uploadChunk = async (chunk, chunkNumber) => {
-    const formData = new FormData();
-    formData.append('file', chunk);
-    formData.append('chunkNumber', chunkNumber);
-
-    return axios.post('/guardian/importChunk/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-  }
-
+  //handleImport Function
   const handleImport = async (event) => {
     event.preventDefault();
-    if (!selectedFile) {
-      alert("Please select a file to upload");
-      return;
+    try {
+      await handleFileImport(selectedFile);
+    } catch (err) {
+      console.error(err);
+      alert("Error importing data");
     }
-    const totalChunks = Math.ceil(selectedFile.size / chunkSize);
-    for (let i = 0; i < totalChunks; i++) {
-      try {
-        const chunk = selectedFile.slice(i * chunkSize, (i + 1) * chunkSize);
-        await uploadChunk(chunk, i);
-      }
-      catch (err) {
-        console.log(err);
-        alert("Error uploading chunk");
-      }
-    }
-    alert("File uploaded successfully");
-  }
+  };
 
 
 

@@ -45,6 +45,13 @@ INSTALLED_APPS = [
     'file_handler',
 ]
 
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
 # Add custom authentication backends here
 AUTHENTICATION_BACKENDS = [
     'auth_app.backends.EmailBackend',  # Custom backend for email authentication
