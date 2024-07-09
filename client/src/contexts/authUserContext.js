@@ -65,7 +65,7 @@ export const AuthUserProvider = ({ children }) => {
         clearTimeout(timer);
       };
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated,inactivityTimeout]);
 
   return (
     <AuthUserContext.Provider

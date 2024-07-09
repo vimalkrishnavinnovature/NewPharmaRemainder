@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState} from 'react';
 import {
   MDBTable,
   MDBTableHead,
@@ -12,20 +11,6 @@ import {
 
 const Dashboard = () => {
   const [patientDetails, setPatientDetails] = useState([]);
-
-//   useEffect(() => {
-//     const fetchPatientDetails = async () => {
-//       try {
-//         const response = await axios.get('/get_patient_details/');
-//         setPatientDetails(response.data);
-//       } catch (error) {
-//         console.error('Error fetching patient details:', error);
-//       }
-//     };
-
-//     fetchPatientDetails();
-//   }, []);
-
   return (
     <MDBCard>
       <MDBCardBody>

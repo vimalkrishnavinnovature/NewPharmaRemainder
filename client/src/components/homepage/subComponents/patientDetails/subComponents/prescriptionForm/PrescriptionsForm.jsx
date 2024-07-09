@@ -41,7 +41,7 @@ const PrescriptionsForm = ({ setShowPrescriptionForm, patientID, patientName }) 
             }
         }
         fetchPrescriptions();
-    }, [])
+    }, [patientID])
 
     useEffect(() => {
         console.log("Prescriptions From Prescriptions Component\n: ", prescriptions);
@@ -128,7 +128,7 @@ const PrescriptionsForm = ({ setShowPrescriptionForm, patientID, patientName }) 
                     <h6>{patientName}</h6>
                 </MDBCol>
                 <MDBCol className='d-flex justify-content-end'>
-                    <img src={closeIcon} className='custom-close-icon' onClick={handleClose} />
+                    <img src={closeIcon} className='custom-close-icon' alt='Close' onClick={handleClose} />
                 </MDBCol>
             </MDBRow>
             <form onSubmit={handleSubmit}>

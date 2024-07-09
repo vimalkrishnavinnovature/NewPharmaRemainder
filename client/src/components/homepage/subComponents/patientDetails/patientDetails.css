@@ -1,6 +1,24 @@
 .custom-icons {
-    width: 16px; /* Adjust the width as needed */
-    height: auto; /* Maintain aspect ratio */
-
+    width: 16px ;
+    height: auto ;
 }
+
+.loading-icon {
+    font-size: 48px; /* Adjust the size as needed */
+    animation: spin 2s linear infinite;
+  }
   
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+.custom-pagination-btn-group {
+  display: flex;
+  justify-content: start;
+  padding: 10px;
+}

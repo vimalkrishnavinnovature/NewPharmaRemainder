@@ -28,7 +28,6 @@ import {
 export default function Home() {
   const [openNav, setOpenNav] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  //const [name,setName]=useState('');
   const [guardianDetails,setGuardianDetails]=useState(null);
   const {setUser, setIsAuthenticated } = useAuth();
   const [navOption, setNavOption] = useState(1);
@@ -37,7 +36,6 @@ export default function Home() {
       try {
         const response = await axios.get('/guardian/view/');
         if (!response.data.profileEmpty) {
-          //setName(response.data.FirstName);
           setGuardianDetails({
             GuardianID: response.data.GuardianID,
             FirstName: response.data.FirstName,

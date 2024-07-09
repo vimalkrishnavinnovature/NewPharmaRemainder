@@ -1,4 +1,6 @@
+
 import json
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import render
 from healthcare_app.models import Guardian,Patient,Prescription,Medication
@@ -114,6 +116,7 @@ def add_patient(request):
         # Return an error if the request method is not POST
         return JsonResponse({'message': 'Invalid request method'}, status=405)
     
+
 #view all patients linked to currently logged in guardian  
 @csrf_exempt
 @login_required
@@ -121,21 +124,62 @@ def view_patients(request):
     try:
         # Assuming the request.user is linked to a Guardian instance
         guardian = Guardian.objects.get(UserID=request.user)
-        
+        page = int(request.GET.get('page', 1))
+        patients_per_page = int(request.GET.get('patientsPerPage', 50))
+
+        #offset- it is the number of patients to skip
+        offset =(page-1)*patients_per_page
+        total_patients = Patient.objects.filter(GuardianID=guardian).count()
+        total_pages = total_patients//patients_per_page
+    
+
         # Fetching all patients linked to the guardian
         patients = Patient.objects.filter(GuardianID=guardian).values(
             'PatientID', 'Name', 'DateOfBirth', 'Gender', 'PhoneNumber', 'BloodType'
-        )
+        )[offset:offset+patients_per_page]
         
         # Converting the patients query set to a list to make it JSON serializable
         patients_list = list(patients)
-        return JsonResponse({'patients': patients_list}, status=200)
+        return JsonResponse({'patients': patients_list,'totalPages':total_pages}, status=200)
     except Guardian.DoesNotExist:
         return JsonResponse({'message': 'Guardian not found'}, status=404)
     except Exception as e:
         return JsonResponse({'message': f'An error occurred: {str(e)}'}, status=500)
     
+#delete all patient data for the logged in guardian
+@csrf_exempt
+@login_required
+def delete_patients_all(request):
+    try:
+        guardian = Guardian.objects.get(UserID=request.user)
+        patient_ids = Patient.objects.filter(GuardianID=guardian).values_list('PatientID', flat=True)
+
+        if not patient_ids:
+            print('No patients found for guardian: %s', request.user.username)  # Consider using logging here
+            return JsonResponse({'message': 'No patients found'}, status=404)
+
+        batch_size = 1000
+        total_deleted = 0
+
+        for i in range(0, len(patient_ids), batch_size):
+            batch_ids = patient_ids[i:i+batch_size]
+            with transaction.atomic():
+                # Delete the current batch of patients
+                deleted_count, _ = Patient.objects.filter(PatientID__in=list(batch_ids)).delete()
+                total_deleted += deleted_count
+
+        print(f'{total_deleted} patients deleted for guardian: {request.user.username}')  # Consider using logging here
+        return JsonResponse({'message': f'{total_deleted} patients deleted'}, status=200)
+
+    except Guardian.DoesNotExist:
+        return JsonResponse({'message': 'Guardian not found'}, status=404)
+    except Exception as e:
+        print(f'Error: {str(e)}')  # Consider using logging here
+        return JsonResponse({'message': 'An error occurred'}, status=500)
+
+
 #Views For Prescriptions
+
 @csrf_exempt
 @login_required
 #to view a prescription for a patient
@@ -216,3 +260,4 @@ def add_prescription(request, patient_id):
             return JsonResponse({'message': f'An error occurred: {str(e)}'}, status=500)
     else:
         return JsonResponse({'message': 'Invalid request method'}, status=405)
+

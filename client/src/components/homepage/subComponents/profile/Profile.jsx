@@ -95,6 +95,7 @@ const Profile = ({ setShowProfile, guardianData = null }) => {
                 setAddress('');
                 setRelationshipToPatient('');
                 setError({}); // Clear any errors
+                setShowProfile(false);
             } catch (err) {
                 if (err.response) {
                     setError(err.response.data.errors || { form: 'Server error, please try again later.' });
