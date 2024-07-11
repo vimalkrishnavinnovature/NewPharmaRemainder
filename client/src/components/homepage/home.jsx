@@ -9,6 +9,7 @@ import navigationIcon from '../../resources/home/navigationIcon.png';
 import profileIcon from '../../resources/home/profileIcon.png';
 import PatientDetails from './subComponents/patientDetails/PatientDetails';
 import Dashboard from './subComponents/dashboard/Dashboard';
+import Settings from './subComponents/settings/Settings';
 import {
   MDBBtn,
   MDBCollapse,
@@ -28,8 +29,8 @@ import {
 export default function Home() {
   const [openNav, setOpenNav] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [guardianDetails,setGuardianDetails]=useState(null);
-  const {setUser, setIsAuthenticated } = useAuth();
+  const [guardianDetails, setGuardianDetails] = useState(null);
+  const { setUser, setIsAuthenticated } = useAuth();
   const [navOption, setNavOption] = useState(1);
   useEffect(() => {
     const fetchGuardianId = async () => {
@@ -116,11 +117,16 @@ export default function Home() {
                 <MDBNavbarItem>
                   <MDBNavbarLink href='#' onClick={() => setNavOption(2)}>Patient Details</MDBNavbarLink>
                 </MDBNavbarItem>
+                <MDBNavbarItem>
+                  <MDBNavbarLink href='#' onClick={() => setNavOption(3)}>Settings</MDBNavbarLink>
+                </MDBNavbarItem>
               </MDBNavbarNav>
             </MDBCollapse>
           </MDBContainer>
         </MDBNavbar>
-        {navOption === 1 ? <Dashboard /> : <PatientDetails />}
+        {navOption === 1 && <Dashboard />}
+        {navOption === 2 && <PatientDetails />}
+        {navOption === 3 && <Settings />}
       </MDBContainer>
       {showProfile && <Profile setShowProfile={setShowProfile} guardianData={guardianDetails} />}
     </div>
